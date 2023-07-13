@@ -41,9 +41,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textSize="18dp"
             android:onClick="clickOk"
-            android:text="认识" />
+            android:text="认识"
+            android:padding="10dp"
+            android:textSize="20dp" />
 
         <Space
             android:layout_width="wrap_content"
@@ -55,9 +56,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textSize="18dp"
             android:onClick="clickGood"
-            android:text="熟悉" />
+            android:padding="10dp"
+            android:text="熟悉"
+            android:textSize="20dp" />
 
         <Space
             android:layout_width="wrap_content"
@@ -69,9 +71,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textSize="18dp"
             android:onClick="clickBad"
-            android:text="不会" />
+            android:text="不会"
+            android:padding="10dp"
+            android:textSize="20dp" />
 
         <Space
             android:layout_width="wrap_content"

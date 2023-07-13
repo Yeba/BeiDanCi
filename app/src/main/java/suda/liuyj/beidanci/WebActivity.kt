@@ -14,58 +14,65 @@ import suda.liuyj.beidanci.databinding.ActivityWebBinding
 
 
 class WebActivity : AppCompatActivity() {
-    private var _coverView:View?=null
+    private var _coverView: View? = null
     private var webView: WebView? = null
-    private var urlSuffixAudio=""
-    private var urlSuffixWeb=""
+    private var urlSuffixAudio = ""
+    private var urlSuffixWeb = ""
+    private var dark=false
 
-//    private val _words= listOf("hello","world","fun")
-//    private var _wdidx=0
-    fun next(ok:LearnStateOnce=LearnStateOnce.None){
-//        _wdidx=(_wdidx+1)%_words.size
-//        val word=_words[_wdidx]
-        val word= theBook.next(ok,applicationContext)
-        if (word== TheEndOfBook) {
-            toast("已完成可学习任务，请更换任务或更换单词本",3,applicationContext)
+    fun next(ok: LearnStateOnce = LearnStateOnce.None) {
+        val word = theBook.next(ok, applicationContext)
+        if (word == TheEndOfBook) {
+            toast("已完成可学习任务，请更换任务或更换单词本", 3, applicationContext)
             this.finish()
         }
-        this.title=word
-        if(_coverView!=null) _coverView!!.visibility= View.VISIBLE
+        this.title = word
+        if (_coverView != null) _coverView!!.visibility = View.VISIBLE
         webView?.loadUrl("https://dict.youdao.com/m/result?word=$word&$urlSuffixWeb")
         playAudioAsync("https://dict.youdao.com/dictvoice?audio=$word&$urlSuffixAudio")
     }
 
-    fun clickCover(view: View){
-        view.visibility=View.INVISIBLE
-        if(_coverView == null)_coverView=view
+    fun clickCover(view: View) {
+        view.visibility = View.INVISIBLE
+        if (_coverView == null) _coverView = view
     }
-    fun clickOk(view: View){ next(LearnStateOnce.Ok) }
-    fun clickBad(view:View){ next(LearnStateOnce.Bad) }
-    fun clickGood(view: View){ next(LearnStateOnce.Good) }
+
+    fun clickOk(view: View) {
+        next(LearnStateOnce.Ok)
+    }
+
+    fun clickBad(view: View) {
+        next(LearnStateOnce.Bad)
+    }
+
+    fun clickGood(view: View) {
+        next(LearnStateOnce.Good)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_web)
         val _binding = ActivityWebBinding.inflate(layoutInflater)
-        webView= _binding.webWeb
+        webView = _binding.webWeb
         webInit()
     }
 
     override fun onResume() {
         super.onResume()
-        if (theBook.name()==""||theBook.len()==0){
-            toast("单词本为空，请导入",5,applicationContext)
-            Log.e("web","id<0 or size =0")
+        dark= isDark(applicationContext)
+        if (theBook.name() == "" || theBook.len() == 0) {
+            toast("单词本为空，请导入", 5, applicationContext)
+            Log.e("web", "id<0 or size =0")
             finish()
             return
         }
-        urlSuffixAudio="type=${getPronounce(application)+1}" // type 1 英式 2 美式
-        urlSuffixWeb="lang=${getLang(application)}"
+        urlSuffixAudio = "type=${getPronounce(application) + 1}" // type 1 英式 2 美式
+        urlSuffixWeb = "lang=${getLang(application)}"
         next()
     }
 
-    fun playAudioAsync(url:String){
-        val mediaPlayer=MediaPlayer()
+    fun playAudioAsync(url: String) {
+        val mediaPlayer = MediaPlayer()
         mediaPlayer.setDataSource(url)
         mediaPlayer.prepareAsync()
         mediaPlayer.setOnPreparedListener {
@@ -77,18 +84,37 @@ class WebActivity : AppCompatActivity() {
         }
     }
 
-    fun webInit(){
+    fun webInit() {
         webView = findViewById(R.id.web_web)
 //        webView.loadUrl()
 
-        val webClient = object : WebViewClient(){
-            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+        val webClient = object : WebViewClient() {
+            override fun shouldOverrideUrlLoading(
+                view: WebView?,
+                request: WebResourceRequest?
+            ): Boolean {
                 return false
+            }
+
+            fun black(view: WebView){
+                if(dark)view.evaluateJavascript("javascript:document.querySelectorAll('*').forEach(function(node) {node.style.backgroundColor = '#000';node.style.color = '#fff';});",null)
+            }
+            //  override fun shouldInterceptRequest //拦截请求
+            //或者多进程预加载
+            //对黑暗模式注入css，但是会闪屏，显示好了再刷新成黑的
+            override fun onPageCommitVisible(view: WebView?, url: String?) { //onPageFinished
+                super.onPageCommitVisible(view, url)
+                if (view != null)black(view)
+            }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                if (view != null)black(view)
             }
         }
 
         //下面这些直接复制就好
-        webView?.webViewClient=webClient
+        webView?.webViewClient = webClient
 
         val webSettings = webView!!.settings
         webSettings.javaScriptEnabled = true  // 开启 JavaScript 交互
@@ -120,7 +146,7 @@ class WebActivity : AppCompatActivity() {
         webSettings.setGeolocationEnabled(false) // 是否使用地理位置
 
         webView?.fitsSystemWindows = true
-        webView?.setLayerType(View.LAYER_TYPE_HARDWARE,null)
+        webView?.setLayerType(View.LAYER_TYPE_HARDWARE, null)
 //        webView?.loadUrl(WEB_URL)
 
     }

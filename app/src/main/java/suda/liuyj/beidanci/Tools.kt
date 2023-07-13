@@ -1,6 +1,7 @@
 package suda.liuyj.beidanci
 
 import android.app.AlertDialog
+import android.app.UiModeManager
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.ContentUris
@@ -15,10 +16,12 @@ import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import java.io.File
 
 
+fun isDark(ctx: Context):Boolean{
+    return ctx.resources.configuration.uiMode==0x21
+}
 fun toast(msg: String, duration: Int, ctx: Context) {
     Toast.makeText(ctx, msg, duration).show()
 }
