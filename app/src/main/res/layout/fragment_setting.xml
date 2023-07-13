@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".ui.SettingFragment">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="15dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/set_txt_book"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="9"
+
+                    android:text="当前词本："
+                    android:textColor="@color/design_default_color_primary"
+                    android:textSize="15dp" />
+
+                <Button
+                    android:id="@+id/set_but_bok"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="导入文件" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="30dp"
+                android:layout_marginTop="-10dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/set_txt_book1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="@color/design_default_color_secondary"
+                    android:textSize="15dp"
+                    android:text="单词本下载1" />
+
+                <TextView
+                    android:id="@+id/set_txt_book2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="@color/design_default_color_secondary"
+                    android:textSize="15dp"
+                    android:text="单词本下载2" />
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_marginLeft="30dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="若无符合需求的单词本，欢迎制作后PR到GitHub仓库" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="15dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/set_txt_lang"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="5"
+                    android:text="学习的语言："
+                    android:textColor="@color/design_default_color_primary"
+                    android:textSize="15dp" />
+
+                <RadioGroup
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1">
+
+                    <RadioButton
+                        android:id="@+id/set_select_english"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:text="英语" />
+
+                    <RadioButton
+                        android:id="@+id/set_select_fa"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="法语" />
+
+                    <RadioButton
+                        android:id="@+id/set_select_han"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="韩语" />
+
+                    <RadioButton
+                        android:id="@+id/set_select_ri"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="日语" />
+                </RadioGroup>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/set_pronounce_root"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="15dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/set_txt_pronounce"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="6"
+                    android:text="发音："
+                    android:textColor="@color/design_default_color_primary"
+                    android:textSize="15dp" />
+
+                <RadioGroup
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1">
+
+                    <RadioButton
+                        android:id="@+id/set_select_ying"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:text="英式" />
+
+                    <RadioButton
+                        android:id="@+id/set_select_mei"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="美式" />
+                </RadioGroup>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="15dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/set_txt_github"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="@color/design_default_color_primary"
+                    android:textSize="15dp"
+                    android:text="Github仓库" />
+
+                <TextView
+                    android:id="@+id/set_txt_update1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="@color/design_default_color_secondary"
+                    android:textSize="15dp"
+                    android:text="更新地址1" />
+
+                <TextView
+                    android:id="@+id/set_txt_update2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="@color/design_default_color_secondary"
+                    android:textSize="15dp"
+                    android:text="更新地址2" />
+            </LinearLayout>
+
+
+        </LinearLayout>
+    </ScrollView>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

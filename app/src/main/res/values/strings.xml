@@ -1,0 +1,7 @@
+<resources>
+    <string name="title_home">主页</string>
+    <string name="title_dashboard">词本</string>
+    <string name="title_notifications">设置</string>
+    <string name="app_name">背单词</string>
+    <string name="app_main_path">"/BeiDanCi"</string>
+</resources>
