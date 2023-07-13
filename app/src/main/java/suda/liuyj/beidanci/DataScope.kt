@@ -34,7 +34,7 @@ enum class DataFiles {
 enum class LearnMode{New,Old,Mix}
 enum class LearnStateOnce{Bad,Ok,Good,None}
 data class MyWord(val word:String,var date:Long,var state:Int)
-private val fib = listOf(0,1, 2, 3, 5, 8, 13, 21, 34, 55, 89,144,144,144,144,144,144,144,144,144)
+private val fib = listOf(1, 2, 3, 5, 8, 13, 21, 34, 55, 89,144,)
 var theBook:MyBook= MyBook()
 val ALPHA="QWERTYUIOPASDFGHJKLZXCVBNM"
 val TheEndOfBook="!@#$!~D:>:235给会54wsdg👍☀FWfb.;984*@#B"
