@@ -34,7 +34,8 @@ enum class DataFiles {
 enum class LearnMode{New,Old,Mix}
 enum class LearnStateOnce{Bad,Ok,Good,None}
 data class MyWord(val word:String,var date:Long,var state:Int)
-private val fib = listOf(1, 2, 3, 5, 8, 13, 21, 34, 55, 89,144,)
+private val fib = listOf(0,1, 2, 3, 5, 8, 13, 21, 34, 55, 89,144,)
+private val levelLearned=6
 var theBook:MyBook= MyBook()
 val ALPHA="QWERTYUIOPASDFGHJKLZXCVBNM"
 val TheEndOfBook="!@#$!~D:>:235给会54wsdg👍☀FWfb.;984*@#B"
@@ -214,10 +215,10 @@ class MyBook() {
         var know = 0
         for (wd in words) {
             if (wd.state == 0) unknown++
-            else if (wd.state > 6) know++
+            else if (wd.state > levelLearned) know++
             else learing++
         }
-        return "\n已学：${know}，在学：${learing}，未学：${unknown}，总共：${words.size}"
+        return "\n已会：${know}，在学：${learing}，未学：${unknown}，总共：${words.size}"
     }
     fun len():Int{return words.size}
     fun _load(wordS: String, ctx: Context){

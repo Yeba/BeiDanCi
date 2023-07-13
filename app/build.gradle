@@ -2,17 +2,17 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
 }
-
+git
 android {
     namespace 'suda.liuyj.beidanci'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "suda.liuyj.beidanci"
         minSdk 24
-        targetSdk 33
+        targetSdk 34
         versionCode 1
-        versionName "1.0"
+        versionName "1.01"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

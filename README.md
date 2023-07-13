@@ -9,6 +9,8 @@
 
 格式为：每行一个单词的文本文件
 
+部分单词本来自于https://github.com/mahavivo/english-wordlists
+
 ## 逻辑和记忆曲线
 
 每个单词重复3次，都认识则升级
