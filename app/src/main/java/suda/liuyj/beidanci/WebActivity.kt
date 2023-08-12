@@ -1,35 +1,127 @@
 package suda.liuyj.beidanci
 
+import android.content.Context
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.webkit.ValueCallback
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import suda.liuyj.beidanci.databinding.ActivityWebBinding
+import java.io.BufferedInputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.net.URL
 
+fun __word_file(word: String): String {
+    var w = word
+    while (' ' in w) w = w.replace(' ', '_')
+    val sp = File.separator
+    return "${dir_inner}${sp}cache${sp}$w"
+}
+
+fun word_file_mht(word: String, black: Boolean): String {
+    val c = if (black) 'b' else 'w'
+    return "${__word_file(word)}_${c}.mht"
+}
+
+fun word_file_tran(word: String): String {
+    return  "${__word_file(word)}.tran"
+}
+
+fun word_file_mp3(word: String, fix: String): String {
+    val t=fix[5]
+    return "${__word_file(word)}_${t}.mp3"
+}
+
+class Mp3Download {
+    // kotlin没有static方法，而是要使用伴生对象来替代
+    companion object {
+        suspend fun asyncDownload(url: String, path: String, ctx: Context) {
+            return GlobalScope.async(Dispatchers.Default) {
+                download(url, path, ctx)
+            }.await()
+        }
+
+        fun download(_url: String, path: String, ctx: Context) {
+            val url = URL(_url)
+            val connection = url.openConnection()
+            connection.connect()
+            val inputStream = BufferedInputStream(url.openStream())
+//            val outputStream = ctx.openFileOutput(path, Context.MODE_PRIVATE)
+            val outputStream=FileOutputStream(File(path))
+            val data = ByteArray(1024)
+            var count = inputStream.read(data)
+            var total = count
+            while (count != -1) {
+                outputStream.write(data, 0, count)
+                count = inputStream.read(data)
+                total += count
+            }
+            outputStream.flush()
+            outputStream.close()
+            inputStream.close()
+        }
+    }
+}
 
 class WebActivity : AppCompatActivity() {
     private var _coverView: View? = null
     private var webView: WebView? = null
     private var urlSuffixAudio = ""
     private var urlSuffixWeb = ""
-    private var dark=false
+    private var dark = false
+    private var word = ""
 
+    @OptIn(DelicateCoroutinesApi::class)
     fun next(ok: LearnStateOnce = LearnStateOnce.None) {
-        val word = theBook.next(ok, applicationContext)
+        word = theBook.next(ok, applicationContext)
         if (word == TheEndOfBook) {
             toast("已完成可学习任务，请更换任务或更换单词本", 3, applicationContext)
             this.finish()
         }
         this.title = word
         if (_coverView != null) _coverView!!.visibility = View.VISIBLE
-        webView?.loadUrl("https://dict.youdao.com/m/result?word=$word&$urlSuffixWeb")
-        playAudioAsync("https://dict.youdao.com/dictvoice?audio=$word&$urlSuffixAudio")
+        webView?.let {
+            val f1 = word_file_mht(word, false)
+            val f2 = word_file_mht(word, true)
+            if (dark) {
+                if (FileUtil.exist(f2)) {
+                    it.loadUrl(f2)
+                }
+                else {
+                    it.loadUrl("https://dict.youdao.com/m/result?word=$word&$urlSuffixWeb")
+                }
+            } else {
+                if (FileUtil.exist(f1)) {
+                    it.loadUrl(f1)
+                }
+                else {
+                    it.loadUrl("https://dict.youdao.com/m/result?word=$word&$urlSuffixWeb")
+                }
+            }
+        }
+        val f3 = word_file_mp3(word, urlSuffixAudio)
+        if (!FileUtil.exist(f3)) {
+            val url = "https://dict.youdao.com/dictvoice?audio=$word&$urlSuffixAudio"
+            val ctx = this
+            GlobalScope.launch(Dispatchers.Default) {
+                Mp3Download.asyncDownload(url, f3, ctx)
+                playAudioAsync(f3)
+            }
+        } else {
+            playAudioAsync(f3)
+        }
     }
 
     fun clickCover(view: View) {
@@ -59,7 +151,7 @@ class WebActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        dark= isDark(applicationContext)
+        dark = isDark(applicationContext)
         if (theBook.name() == "" || theBook.len() == 0) {
             toast("单词本为空，请导入", 5, applicationContext)
             Log.e("web", "id<0 or size =0")
@@ -96,20 +188,30 @@ class WebActivity : AppCompatActivity() {
                 return false
             }
 
-            fun black(view: WebView){
-                if(dark)view.evaluateJavascript("javascript:document.querySelectorAll('*').forEach(function(node) {node.style.backgroundColor = '#000';node.style.color = '#fff';});",null)
-            }
-            //  override fun shouldInterceptRequest //拦截请求
-            //或者多进程预加载
-            //对黑暗模式注入css，但是会闪屏，显示好了再刷新成黑的
-            override fun onPageCommitVisible(view: WebView?, url: String?) { //onPageFinished
-                super.onPageCommitVisible(view, url)
-                if (view != null)black(view)
-            }
-
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
-                if (view != null)black(view)
+                view?.let {
+                    val f1 = word_file_mht(word, false)
+                    val f2 = word_file_mht(word, true)
+                    val f3=word_file_tran(word)
+                    if (!FileUtil.exist(f1 )) {
+                        it.saveWebArchive(f1)
+                    }
+                    if (!FileUtil.exist(f2 ) && dark) {
+                        it.evaluateJavascript(
+                            "javascript:document.querySelectorAll('*').forEach(function(node) {node.style.backgroundColor = '#000';node.style.color = '#fff';});",
+                            null
+                        )
+                        it.saveWebArchive(f2)
+                    }
+                    if (!FileUtil.exist(f3)) {
+                        it.evaluateJavascript(
+                            "javascript:s=\"\";x=document.getElementsByClassName(\"trans\");for(i=0;i<x.length;i++)s+=x[i].innerText+\"\\n\";s",
+                             ValueCallback {s->File(f3).printWriter().use{
+                                     it.print(s.replace('"',' ').replace('\'',' ').replace("\\n","\n").trim())} }
+                        )
+                    }
+                }
             }
         }
 
@@ -127,8 +229,8 @@ class WebActivity : AppCompatActivity() {
         webSettings.builtInZoomControls = false // 设置内置的缩放控件 若为false 则该WebView不可缩放
         webSettings.displayZoomControls = false // 隐藏原生的缩放控件
 
-        webSettings.blockNetworkImage = false // 禁止或允许WebView从网络上加载图片
-        webSettings.loadsImagesAutomatically = true // 支持自动加载图片
+        webSettings.blockNetworkImage = true // 阻止图片
+        webSettings.loadsImagesAutomatically = false // 自动加载图片
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             webSettings.safeBrowsingEnabled = true // 是否开启安全模式

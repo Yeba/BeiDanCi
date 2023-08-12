@@ -3,12 +3,14 @@ package suda.liuyj.beidanci
 import android.content.Context
 import android.util.Log
 import java.io.File
-import java.lang.Integer.max
 import java.lang.Integer.min
+import java.lang.Math.max
 import java.lang.Math.round
 import java.util.Calendar
 
 private val debug=false
+var dir_inner=""
+var dir_outter=""
 
 fun loadDataSP(file: String, k: String, ctx: Context): String? {
     val sp = ctx.getSharedPreferences(file, Context.MODE_PRIVATE)
@@ -35,10 +37,10 @@ enum class LearnMode{New,Old,Mix}
 enum class LearnStateOnce{Bad,Ok,Good,None}
 data class MyWord(val word:String,var date:Long,var state:Int)
 private val fib = listOf(0,1, 2, 3, 5, 8, 13, 21, 34, 55, 89,144,)
-private val levelLearned=6
+private const val levelLearned=5
 var theBook:MyBook= MyBook()
-val ALPHA="QWERTYUIOPASDFGHJKLZXCVBNM"
-val TheEndOfBook="!@#$!~D:>:235给会54wsdg👍☀FWfb.;984*@#B"
+const val ALPHA="QWERTYUIOPASDFGHJKLZXCVBNM"
+const val TheEndOfBook="!@#$!~D:>:235给会54wsdg👍☀FWfb.;984*@#B"
 
 fun getPronounce(ctx: Context):Int{
     var s = loadDataSP(DataFiles.Sys.name, "Pronounce", ctx) ?: "0"
@@ -91,10 +93,10 @@ fun importBook(path: String, ctx: Context) {
     if(debug) Log.e("dataScope","import:$path, name:$name")
     try {
         val s = File(path).readText()
-        val bk=MyBook()
-        bk._load(s,ctx)
+        theBook=MyBook()
         _importBook(name,s,ctx)
         theBook.load(ctx)
+        toast("导入成功",1,ctx)
     }catch (e:Exception){
         var err="\n$e"
         for (s in e.stackTrace) err+="\n$s"
@@ -104,7 +106,7 @@ fun importBook(path: String, ctx: Context) {
 }
 
 var learnMode:LearnMode=LearnMode.Mix
-private val batch_size = 9 // 每批次单词数
+private val batch_size = 8 // 每批次单词数
 private val times_pre_learn = 3 //每个单词学习几遍以升级
 
 class MyBook() {
@@ -175,7 +177,7 @@ class MyBook() {
                 saveWord(words[batch[batch_i]], ctx)
             } else if (ok == LearnStateOnce.Good) {
                 batch_count[batch_i] = times_pre_learn
-                words[batch[batch_i]].state =min(words[batch[batch_i]].state+1, fib.size-1)
+                words[batch[batch_i]].state =max(words[batch[batch_i]].state+1, levelLearned)
                 words[batch[batch_i]].date = timeMillis_Now()
                 saveWord(words[batch[batch_i]], ctx)
             } else if (ok == LearnStateOnce.Ok) {
@@ -218,18 +220,27 @@ class MyBook() {
             else if (wd.state > levelLearned) know++
             else learing++
         }
-        return "\n已会：${know}，在学：${learing}，未学：${unknown}，总共：${words.size}"
+        return "熟悉：${know}，在学：${learing}，未学：${unknown}，共：${words.size}"
     }
     fun len():Int{return words.size}
-    fun _load(wordS: String, ctx: Context){
+    fun _load(txt: String, ctx: Context){
         words.clear()
         idx.clear()
         batch.clear()
-        for (wd in wordS.split('\n')) {
-            if (wd =="" || wd.isNotEmpty() && wd[0]==' ') continue
-            val s2 = loadDataSP(DataFiles.WordState.name+lang, wd, ctx) ?: "0\t0"
-            val x = s2.split('\t')
-            val myWd=MyWord(wd,x[1].toLong(),x[0].toInt())
+        for (line in txt.split('\n')) {
+            if (line =="" || line.isNotEmpty() && line[0]==' ') continue
+            val wordStateIn = loadDataSP(DataFiles.WordState.name+lang, line, ctx) ?: "0\t0"
+            val stateIn = wordStateIn.split('\t')
+            var level=stateIn[0].toInt()
+            var tim=stateIn[1].toLong()
+            var name=line
+            if ('\t' in line){
+                val ss=line.split('\t')
+                name=ss[0]
+                level=ss[1].toInt()
+                tim=ss[2].toLong()
+            }
+            val myWd=MyWord(name,tim,level)
             idx.add(this.words.size)
             this.words.add(myWd)
         }
@@ -242,6 +253,15 @@ class MyBook() {
     }
     fun saveWord(w:MyWord,ctx: Context){
         saveDataSP(DataFiles.WordState.name+lang, w.word, "${w.state}\t${w.date}", ctx)
+    }
+    fun backup():String{
+        val path=dir_outter+File.separator+ this.name+".beidanci"
+        File(path).printWriter().use { f->
+            for (wd in words){
+                f.println("${wd.word}\t${wd.state}\t${wd.date}")
+            }
+        }
+        return path
     }
 
 }

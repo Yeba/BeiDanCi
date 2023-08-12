@@ -1,7 +1,6 @@
 package suda.liuyj.beidanci
 
 import android.app.AlertDialog
-import android.app.UiModeManager
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.ContentUris
@@ -17,16 +16,19 @@ import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import java.io.File
+import java.io.FileInputStream
+import java.text.DecimalFormat
 
 
-fun isDark(ctx: Context):Boolean{
-    return ctx.resources.configuration.uiMode==0x21
+fun isDark(ctx: Context): Boolean {
+    return ctx.resources.configuration.uiMode == 0x21
 }
+
 fun toast(msg: String, duration: Int, ctx: Context) {
     Toast.makeText(ctx, msg, duration).show()
 }
 
-fun checkStorageManagerPermission(msg:String,ctx: Context) {
+fun checkStorageManagerPermission(msg: String, ctx: Context) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R ||
         Environment.isExternalStorageManager()
     ) {
@@ -47,14 +49,19 @@ fun openBrowser(url: String, ctx: Context) {
     ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
 }
 
-fun setClipBoard(s:String,ctx: Context,txtToast:String=""){
+fun setClipBoard(s: String, ctx: Context, txtToast: String = "") {
     val clipboardManager = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     val clipData = ClipData.newPlainText(R.string.app_name.toString(), s)
     clipboardManager.setPrimaryClip(clipData)
-    if (txtToast!="") Toast.makeText(ctx,txtToast,Toast.LENGTH_LONG).show()
+    if (txtToast != "") Toast.makeText(ctx, txtToast, Toast.LENGTH_LONG).show()
 }
 
 object FileUtil {
+    fun exist(path: String): Boolean {
+        val file = File(path)
+        return file.exists() && !file.isDirectory
+    }
+
     /**
      * 专为Android4.4设计的从Uri获取文件绝对路径，以前的方法已不好使
      */
