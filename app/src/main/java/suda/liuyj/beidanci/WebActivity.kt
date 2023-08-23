@@ -12,7 +12,6 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
@@ -29,21 +28,20 @@ fun __word_file(word: String): String {
     val sp = File.separator
     return "${dir_inner}${sp}cache${sp}$w"
 }
-
-fun word_file_mht(word: String, black: Boolean): String {
-    val c = if (black) 'b' else 'w'
-    return "${__word_file(word)}_${c}.mht"
+//网页缓存路径
+fun word_file_mht(word: String): String {
+    return "${__word_file(word)}.mht"
 }
-
+//翻译缓存路径
 fun word_file_tran(word: String): String {
-    return  "${__word_file(word)}.tran"
+    return "${__word_file(word)}.tran"
 }
-
+//发音缓存路径
 fun word_file_mp3(word: String, fix: String): String {
-    val t=fix[5]
+    val t = fix[5]
     return "${__word_file(word)}_${t}.mp3"
 }
-
+//协程异步下载音频
 class Mp3Download {
     // kotlin没有static方法，而是要使用伴生对象来替代
     companion object {
@@ -59,7 +57,7 @@ class Mp3Download {
             connection.connect()
             val inputStream = BufferedInputStream(url.openStream())
 //            val outputStream = ctx.openFileOutput(path, Context.MODE_PRIVATE)
-            val outputStream=FileOutputStream(File(path))
+            val outputStream = FileOutputStream(File(path))
             val data = ByteArray(1024)
             var count = inputStream.read(data)
             var total = count
@@ -74,16 +72,71 @@ class Mp3Download {
         }
     }
 }
+//异步播放音频
+fun __playAudioAsync(path: String) {
+    val mediaPlayer = MediaPlayer()
+    mediaPlayer.setDataSource(path)
+    mediaPlayer.prepareAsync()
+    mediaPlayer.setOnPreparedListener {
+        it.start()
+    }
+    mediaPlayer.setOnCompletionListener {
+        it.stop()
+        it.release()
+    }
+}
+
+private var urlSuffixAudio = ""
+//对于word，异步下载并播放
+fun playMp3(word: String, ctx: Context) {
+    val f3 = word_file_mp3(word, urlSuffixAudio)
+    if (!FileUtil.exist(f3)) {
+        val url = "https://dict.youdao.com/dictvoice?audio=$word&$urlSuffixAudio"
+        GlobalScope.launch(Dispatchers.Default) {
+            Mp3Download.asyncDownload(url, f3, ctx)
+            __playAudioAsync(f3)
+        }
+    } else {
+        __playAudioAsync(f3)
+    }
+}
 
 class WebActivity : AppCompatActivity() {
     private var _coverView: View? = null
     private var webView: WebView? = null
-    private var urlSuffixAudio = ""
     private var urlSuffixWeb = ""
     private var dark = false
     private var word = ""
 
-    @OptIn(DelicateCoroutinesApi::class)
+    //加载网页缓存或下载
+    fun _load_word_web(){
+        webView?.let {
+            val f1 = word_file_mht(word)
+            if (FileUtil.exist(f1)) {
+                it.loadUrl(f1)
+            } else {
+                it.loadUrl("https://dict.youdao.com/m/result?word=$word&$urlSuffixWeb")
+            }
+        }
+    }
+    //刷新缓存
+    fun clickRef(view:View?){
+        // clear bad cache
+        val f1 = word_file_mht(word)
+        val f2 = word_file_tran(word)
+        val f3 = word_file_mp3(word, urlSuffixAudio)
+        if (FileUtil.exist(f1))File(f1).delete()
+        if (FileUtil.exist(f2))File(f2).delete()
+        if (FileUtil.exist(f3))File(f3).delete()
+        // reload
+        webView?.loadUrl("https://dict.youdao.com/m/result?word=$word&$urlSuffixWeb")
+        playMp3(word, this)
+    }
+    //发音
+    fun clickSound(view:View?){
+        playMp3(word, this)
+    }
+    // 下一个单词
     fun next(ok: LearnStateOnce = LearnStateOnce.None) {
         word = theBook.next(ok, applicationContext)
         if (word == TheEndOfBook) {
@@ -92,36 +145,8 @@ class WebActivity : AppCompatActivity() {
         }
         this.title = word
         if (_coverView != null) _coverView!!.visibility = View.VISIBLE
-        webView?.let {
-            val f1 = word_file_mht(word, false)
-            val f2 = word_file_mht(word, true)
-            if (dark) {
-                if (FileUtil.exist(f2)) {
-                    it.loadUrl(f2)
-                }
-                else {
-                    it.loadUrl("https://dict.youdao.com/m/result?word=$word&$urlSuffixWeb")
-                }
-            } else {
-                if (FileUtil.exist(f1)) {
-                    it.loadUrl(f1)
-                }
-                else {
-                    it.loadUrl("https://dict.youdao.com/m/result?word=$word&$urlSuffixWeb")
-                }
-            }
-        }
-        val f3 = word_file_mp3(word, urlSuffixAudio)
-        if (!FileUtil.exist(f3)) {
-            val url = "https://dict.youdao.com/dictvoice?audio=$word&$urlSuffixAudio"
-            val ctx = this
-            GlobalScope.launch(Dispatchers.Default) {
-                Mp3Download.asyncDownload(url, f3, ctx)
-                playAudioAsync(f3)
-            }
-        } else {
-            playAudioAsync(f3)
-        }
+        _load_word_web()
+        playMp3(word, this)
     }
 
     fun clickCover(view: View) {
@@ -163,19 +188,6 @@ class WebActivity : AppCompatActivity() {
         next()
     }
 
-    fun playAudioAsync(url: String) {
-        val mediaPlayer = MediaPlayer()
-        mediaPlayer.setDataSource(url)
-        mediaPlayer.prepareAsync()
-        mediaPlayer.setOnPreparedListener {
-            it.start()
-        }
-        mediaPlayer.setOnCompletionListener {
-            it.stop()
-            it.release()
-        }
-    }
-
     fun webInit() {
         webView = findViewById(R.id.web_web)
 //        webView.loadUrl()
@@ -191,24 +203,27 @@ class WebActivity : AppCompatActivity() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 view?.let {
-                    val f1 = word_file_mht(word, false)
-                    val f2 = word_file_mht(word, true)
-                    val f3=word_file_tran(word)
-                    if (!FileUtil.exist(f1 )) {
+                    val f1 = word_file_mht(word)
+                    val f3 = word_file_tran(word)
+                    if (!FileUtil.exist(f1)) {
                         it.saveWebArchive(f1)
                     }
-                    if (!FileUtil.exist(f2 ) && dark) {
-                        it.evaluateJavascript(
-                            "javascript:document.querySelectorAll('*').forEach(function(node) {node.style.backgroundColor = '#000';node.style.color = '#fff';});",
-                            null
-                        )
-                        it.saveWebArchive(f2)
-                    }
+                    if(dark){
+                    it.evaluateJavascript(
+                        "javascript:document.querySelectorAll('*').forEach(function(node) {node.style.backgroundColor = '#000';node.style.color = '#fff';});",
+                        null
+                    )}
                     if (!FileUtil.exist(f3)) {
                         it.evaluateJavascript(
                             "javascript:s=\"\";x=document.getElementsByClassName(\"trans\");for(i=0;i<x.length;i++)s+=x[i].innerText+\"\\n\";s",
-                             ValueCallback {s->File(f3).printWriter().use{
-                                     it.print(s.replace('"',' ').replace('\'',' ').replace("\\n","\n").trim())} }
+                            ValueCallback { s ->
+                                File(f3).printWriter().use {
+                                    it.print(
+                                        s.replace('"', ' ').replace('\'', ' ').replace("\\n", "\n")
+                                            .trim()
+                                    )
+                                }
+                            }
                         )
                     }
                 }
@@ -229,8 +244,8 @@ class WebActivity : AppCompatActivity() {
         webSettings.builtInZoomControls = false // 设置内置的缩放控件 若为false 则该WebView不可缩放
         webSettings.displayZoomControls = false // 隐藏原生的缩放控件
 
-        webSettings.blockNetworkImage = true // 阻止图片
-        webSettings.loadsImagesAutomatically = false // 自动加载图片
+        webSettings.blockNetworkImage = false // 阻止图片
+        webSettings.loadsImagesAutomatically = true // 自动加载图片
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             webSettings.safeBrowsingEnabled = true // 是否开启安全模式

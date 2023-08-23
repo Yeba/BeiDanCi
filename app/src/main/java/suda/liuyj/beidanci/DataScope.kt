@@ -217,7 +217,7 @@ class MyBook() {
         var know = 0
         for (wd in words) {
             if (wd.state == 0) unknown++
-            else if (wd.state > levelLearned) know++
+            else if (wd.state >= levelLearned) know++
             else learing++
         }
         return "熟悉：${know}，在学：${learing}，未学：${unknown}，共：${words.size}"

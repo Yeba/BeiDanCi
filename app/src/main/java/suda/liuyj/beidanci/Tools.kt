@@ -6,6 +6,7 @@ import android.content.ClipboardManager
 import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.database.Cursor
 import android.net.Uri
 import android.os.Build
@@ -16,12 +17,11 @@ import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import java.io.File
-import java.io.FileInputStream
-import java.text.DecimalFormat
 
 
 fun isDark(ctx: Context): Boolean {
-    return ctx.resources.configuration.uiMode == 0x21
+//    return ctx.resources.configuration.uiMode == 0x21
+    return (ctx.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_YES)!=0
 }
 
 fun toast(msg: String, duration: Int, ctx: Context) {
